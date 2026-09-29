@@ -1,0 +1,8 @@
+"""
+ASGI config for box_selection project.
+"""
+import os
+from django.core.asgi import get_asgi_application
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'box_selection.settings')
+application = get_asgi_application()
