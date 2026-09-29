@@ -4,6 +4,14 @@ A modular Django system that recommends the cheapest suitable shipping box for e
 
 ---
 
+## Units & Conventions
+* **Dimensions**: Centimeters (cm)
+* **Weight**: Grams (g)
+* **Cost**: Currency ($ USD)
+* **Volume**: Cubic centimeters (cm³)
+
+---
+
 ## 1. Setup & Installation
 
 ### Prerequisites
@@ -13,8 +21,8 @@ A modular Django system that recommends the cheapest suitable shipping box for e
 ### Clone and Initialize Environment
 ```bash
 # Clone the repository
-git clone <repo-url>
-cd "AI Assisted Box Selection System"
+git clone https://github.com/swarajladke/AI-Assisted-Box-Selection-System.git
+cd AI-Assisted-Box-Selection-System
 
 # Create and activate virtual environment
 python -m venv venv
@@ -32,22 +40,29 @@ pip install -r requirements.txt
 ## 2. How to Run
 
 ### 1. Apply Database Migrations
+Migrations are committed in the repository. Simply apply them:
 ```bash
-python manage.py makemigrations packing
 python manage.py migrate
 ```
 
-### 2. Create Superuser (for Django Admin)
+### 2. Seed Demo Data
+Populate the database with sample boxes (Small, Medium, Large, Heavy-Duty), catalog products, and 3 test orders (one fitting a small box, one needing a large box, and one too large to fit any box):
+```bash
+python manage.py seed_demo
+```
+*(This command is idempotent and safe to run multiple times without duplicating records).*
+
+### 3. Create Superuser (Optional, for Django Admin)
 ```bash
 python manage.py createsuperuser
 ```
 
-### 3. Start Development Server
+### 4. Start Development Server
 ```bash
 python manage.py runserver
 ```
 
-### 4. Access the Application
+### 5. Access the Application
 * **Warehouse Packing Station UI**: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 * **Django Admin**: [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/)
 * **Recommendation REST API**: `POST http://127.0.0.1:8000/api/orders/<id>/recommend-box/`
@@ -79,13 +94,17 @@ python manage.py test packing --verbosity=2
      $$\text{item.min} \le \text{box.min} \quad\land\quad \text{item.mid} \le \text{box.mid} \quad\land\quad \text{item.max} \le \text{box.max}$$
 
 3. **Deterministic Selection & Tie-Breaking**:
-   * Candidate boxes that satisfy dimension, weight, and volume constraints are sorted by:
+   * Candidate boxes that satisfy dimension, weight (in grams), and volume constraints are sorted by:
      1. **Cost (Ascending)**: Picks the cheapest packaging option.
      2. **Inner Volume (Ascending)**: Minimizes void fill, dunnage, and carrier dimensional weight (DIM weight) penalties.
      3. **Name (Alphabetical)**: Guarantees deterministic, reproducible results across warehouse shifts.
 
 4. **Auditability & Explainable Rejections**:
-   * The service returns not only the recommended box, but also a structured list of `rejected_boxes` with specific failure reasons (e.g., exact item dimension overflow, weight capacity exceeded, or volume deficit).
+   * The service returns not only the recommended box, but also a structured list of `rejected_boxes` with specific failure reasons (e.g., exact item dimension overflow, weight capacity exceeded in grams, or volume deficit).
+
+5. **Security & CSRF Note**:
+   * The `@csrf_exempt` decorator on the API endpoint `POST /api/orders/<id>/recommend-box/` is intentional for this assignment to allow direct testing via `curl` and third-party warehouse scanners without session setup.
+   * In a production environment, token-based authentication (e.g., OAuth2, API Keys) and proper rate limiting would be enforced.
 
 ---
 
