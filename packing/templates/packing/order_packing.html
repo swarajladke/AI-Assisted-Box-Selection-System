@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assisted Box Selection | Fulfillment Packing Station</title>
+    <!-- Modern Typography: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-canvas: #090d16;
+            --bg-card: rgba(18, 24, 38, 0.85);
+            --bg-card-border: rgba(255, 255, 255, 0.08);
+            --bg-input: #151d30;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-glow: rgba(99, 102, 241, 0.25);
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.2);
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.15);
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-canvas);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 32px 24px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--bg-card-border);
+        }
+
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--primary);
+            font-weight: 700;
+            background: rgba(99, 102, 241, 0.12);
+            padding: 6px 12px;
+            border-radius: 9999px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(99, 102, 241, 0.25);
+        }
+
+        .brand-title {
+            font-size: 1.85rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--bg-card-border);
+            transition: var(--transition);
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Order Selector Bar */
+        .selector-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 32px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 16px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        select {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--text-primary);
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #ffffff;
+            box-shadow: 0 4px 14px var(--primary-glow);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-primary);
+            border: 1px solid var(--bg-card-border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.35fr;
+            gap: 28px;
+            align-items: start;
+        }
+
+        @media (max-width: 960px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Glass Panel */
+        .glass-panel {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Order Items List */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+
+        .items-table th {
+            text-align: left;
+            padding: 10px 12px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--bg-card-border);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.05em;
+        }
+
+        .items-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-secondary);
+        }
+
+        .items-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-primary);
+        }
+
+        .product-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .qty-badge {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .metrics-summary {
+            display: flex;
+            gap: 16px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--bg-card-border);
+        }
+
+        .metric-pill {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--bg-card-border);
+            padding: 12px;
+            border-radius: var(--radius-md);
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .metric-val {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Recommendation Hero */
+        .hero-recommendation {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(99, 102, 241, 0.08) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 14px 34px var(--success-glow);
+        }
+
+        .hero-recommendation.no-box {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(245, 158, 11, 0.08) 100%);
+            border-color: rgba(239, 68, 68, 0.35);
+            box-shadow: 0 14px 34px var(--danger-glow);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-badge.success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .status-badge.danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        .box-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-top: 12px;
+            margin-bottom: 8px;
+        }
+
+        .box-name {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.01em;
+        }
+
+        .box-cost {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #34d399;
+        }
+
+        .recommendation-reason {
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .box-specs-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .spec-item {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            text-align: center;
+        }
+
+        .spec-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .spec-val {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-top: 2px;
+        }
+
+        /* Rejected Boxes Section */
+        .rejected-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .rejected-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-left: 3px solid var(--danger);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            transition: var(--transition);
+        }
+
+        .rejected-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .rejected-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .rejected-reason {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .rejected-cost {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        /* Empty state */
+        .empty-placeholder {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        /* API Interactive Console */
+        .api-tester-card {
+            margin-top: 32px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-lg);
+            padding: 20px 24px;
+        }
+
+        .code-block {
+            background: #060911;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.85rem;
+            color: #38bdf8;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            margin-top: 12px;
+            max-height: 250px;
+        }
+
+        /* Alert */
+        .alert-error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 16px 20px;
+            border-radius: var(--radius-md);
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div>
+                <div class="brand-badge">⚡ Warehouse Automation Engine</div>
+                <h1 class="brand-title">Smart Box Recommendation</h1>
+            </div>
+            <div class="nav-links">
+                <a href="/admin/" target="_blank">Django Admin ↗</a>
+            </div>
+        </header>
+
+        {% if error_message %}
+            <div class="alert-error">
+                <strong>Notice:</strong> {{ error_message }}
+            </div>
+        {% endif %}
+
+        <!-- Order Selector Bar -->
+        <div class="selector-card">
+            <form method="GET" action="" class="form-row">
+                <div class="form-group">
+                    <label for="order-select">Select Order for Packing Inspection</label>
+                    <select id="order-select" name="order_id" required>
+                        <option value="">-- Choose an order from queue --</option>
+                        {% for o in orders %}
+                            <option value="{{ o.id }}" {% if selected_order and selected_order.id == o.id %}selected{% endif %}>
+                                Order #{{ o.order_number }} ({{ o.items.count }} unique items)
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" id="btn-inspect">Inspect & Recommend</button>
+            </form>
+        </div>
+
+        {% if selected_order %}
+            <div class="dashboard-grid">
+                <!-- Left: Order Contents -->
+                <div class="glass-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">Order #{{ selected_order.order_number }} Contents</div>
+                        <span class="status-badge success">Active Order</span>
+                    </div>
+
+                    <table class="items-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Qty</th>
+                                <th>Dimensions (cm)</th>
+                                <th>Weight</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in selected_order.items.all %}
+                                <tr>
+                                    <td>
+                                        <div class="product-name">{{ item.product.name }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="qty-badge">{{ item.quantity }}</span>
+                                    </td>
+                                    <td>{{ item.product.length }} × {{ item.product.width }} × {{ item.product.height }}</td>
+                                    <td>{{ item.total_weight }} g</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 24px;">No items in this order.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="metrics-summary">
+                        <div class="metric-pill">
+                            <div class="metric-label">Total Weight</div>
+                            <div class="metric-val">{{ selected_order.total_weight }} g</div>
+                        </div>
+                        <div class="metric-pill">
+                            <div class="metric-label">Total Volume</div>
+                            <div class="metric-val">{{ selected_order.total_volume|floatformat:1 }} cm³</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Recommendation Output & Rejections -->
+                <div>
+                    {% if recommendation %}
+                        {% if recommendation.has_recommendation %}
+                            <!-- Success Hero -->
+                            <div class="hero-recommendation">
+                                <span class="status-badge success">✓ Recommended Box</span>
+                                <div class="box-title-row">
+                                    <div class="box-name">{{ recommendation.recommended_box.name }}</div>
+                                    <div class="box-cost">${{ recommendation.recommended_box.cost|floatformat:2 }}</div>
+                                </div>
+                                <div class="recommendation-reason">{{ recommendation.reason }}</div>
+
+                                <div class="box-specs-grid">
+                                    <div class="spec-item">
+                                        <div class="spec-label">Internal (L×W×H)</div>
+                                        <div class="spec-val">
+                                            {{ recommendation.recommended_box.inner_length }}×{{ recommendation.recommended_box.inner_width }}×{{ recommendation.recommended_box.inner_height }} cm
+                                        </div>
+                                    </div>
+                                    <div class="spec-item">
+                                        <div class="spec-label">Max Capacity</div>
+                                        <div class="spec-val">{{ recommendation.recommended_box.max_weight }} g</div>
+                                    </div>
+                                    <div class="spec-item">
+                                        <div class="spec-label">Inner Volume</div>
+                                        <div class="spec-val">{{ recommendation.recommended_box.inner_volume|floatformat:1 }} cm³</div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <!-- No Box Fits Warning -->
+                            <div class="hero-recommendation no-box">
+                                <span class="status-badge danger">⚠ No Suitable Box Fits</span>
+                                <div class="box-title-row">
+                                    <div class="box-name">Manual Split / Freight Required</div>
+                                </div>
+                                <div class="recommendation-reason">{{ recommendation.reason }}</div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Rejected Boxes Breakdown -->
+                        <div class="glass-panel">
+                            <div class="panel-header">
+                                <div class="panel-title">Rejected Boxes Analysis ({{ recommendation.rejected_boxes|length }})</div>
+                            </div>
+
+                            {% if recommendation.rejected_boxes %}
+                                <div class="rejected-list">
+                                    {% for r in recommendation.rejected_boxes %}
+                                        <div class="rejected-item">
+                                            <div>
+                                                <div class="rejected-name">{{ r.box.name }}</div>
+                                                <div class="rejected-reason">{{ r.reason }}</div>
+                                            </div>
+                                            <div class="rejected-cost">${{ r.box.cost|floatformat:2 }}</div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p style="color: var(--text-muted); font-size: 0.9rem;">No boxes were rejected. All available boxes were suitable.</p>
+                            {% endif %}
+                        </div>
+
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Interactive API Test Trigger -->
+            <div class="api-tester-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div>
+                        <strong style="color: var(--text-primary); font-size: 0.95rem;">REST API Endpoint:</strong>
+                        <code style="color: #a5b4fc; background: rgba(99, 102, 241, 0.15); padding: 3px 8px; border-radius: 4px; margin-left: 8px;">POST /api/orders/{{ selected_order.id }}/recommend-box/</code>
+                    </div>
+                    <button class="btn btn-secondary" id="btn-fetch-api" onclick="callApi({{ selected_order.id }})">
+                        Execute Live API Call
+                    </button>
+                </div>
+                <div id="api-output-container" style="display: none;">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-top: 12px;">Live JSON Response:</div>
+                    <div class="code-block" id="api-output"></div>
+                </div>
+            </div>
+
+        {% else %}
+            <!-- Initial Empty State -->
+            <div class="glass-panel empty-placeholder">
+                <div class="empty-icon">📦</div>
+                <h3 style="color: var(--text-primary); margin-bottom: 6px;">Select an Order to Begin</h3>
+                <p>Pick an order from the dropdown above to calculate the optimal box, view dimensional fit analysis, and inspect rejection reasons.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        async function callApi(orderId) {
+            const btn = document.getElementById('btn-fetch-api');
+            const container = document.getElementById('api-output-container');
+            const output = document.getElementById('api-output');
+            
+            btn.disabled = true;
+            btn.innerText = "Requesting API...";
+
+            try {
+                const response = await fetch(`/api/orders/${orderId}/recommend-box/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                container.style.display = 'block';
+                output.innerText = JSON.stringify(data, null, 2);
+            } catch (err) {
+                container.style.display = 'block';
+                output.innerText = "Error: " + err.message;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Re-execute Live API Call";
+            }
+        }
+    </script>
+</body>
+</html>
