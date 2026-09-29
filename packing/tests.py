@@ -265,6 +265,201 @@ class BoxSelectionServiceTests(TestCase):
         self.assertEqual(len(result.rejected_boxes), 1)
         self.assertIn("exceeds box max weight capacity", result.rejected_boxes[0].reason)
 
+    def test_single_item_heavier_than_every_box_max_weight(self):
+        # Catches failure to reject all boxes when a single item's weight exceeds the max weight capacity of every box.
+        heavy_item = {
+            'name': 'Anvil',
+            'length': Decimal('10.00'),
+            'width': Decimal('10.00'),
+            'height': Decimal('10.00'),
+            'weight': Decimal('99999.00'),
+            'quantity': 1
+        }
+        boxes = [
+            {
+                'name': 'Light Box',
+                'inner_length': Decimal('20.00'),
+                'inner_width': Decimal('20.00'),
+                'inner_height': Decimal('20.00'),
+                'max_weight': Decimal('1000.00'),
+                'cost': Decimal('1.00')
+            },
+            {
+                'name': 'Medium Box',
+                'inner_length': Decimal('30.00'),
+                'inner_width': Decimal('30.00'),
+                'inner_height': Decimal('30.00'),
+                'max_weight': Decimal('5000.00'),
+                'cost': Decimal('2.00')
+            }
+        ]
+        result = select_best_box(items=[heavy_item], boxes=boxes)
+        self.assertFalse(result.has_recommendation)
+        self.assertIsNone(result.recommended_box)
+        self.assertEqual(len(result.rejected_boxes), 2)
+        self.assertIn("exceeds box max weight capacity", result.rejected_boxes[0].reason)
+        self.assertIn("exceeds box max weight capacity", result.rejected_boxes[1].reason)
+
+    def test_order_weight_exactly_equal_to_box_max_weight(self):
+        # Catches boundary off-by-one errors where strictly less (<) is mistakenly used instead of less-than-or-equal (<=) for max weight.
+        item = {
+            'name': 'Exact Weight Item',
+            'length': Decimal('10.00'),
+            'width': Decimal('10.00'),
+            'height': Decimal('10.00'),
+            'weight': Decimal('2500.00'),
+            'quantity': 1
+        }
+        box = {
+            'name': 'Exact Threshold Box',
+            'inner_length': Decimal('20.00'),
+            'inner_width': Decimal('20.00'),
+            'inner_height': Decimal('20.00'),
+            'max_weight': Decimal('2500.00'),
+            'cost': Decimal('2.00')
+        }
+        result = select_best_box(items=[item], boxes=[box])
+        self.assertTrue(result.has_recommendation)
+        self.assertEqual(result.recommended_box['name'], 'Exact Threshold Box')
+
+    def test_order_weight_one_gram_over_max_weight(self):
+        # Catches precision or rounding bugs where an order exceeding max weight by a single gram is erroneously approved.
+        item = {
+            'name': 'Overweight Item',
+            'length': Decimal('10.00'),
+            'width': Decimal('10.00'),
+            'height': Decimal('10.00'),
+            'weight': Decimal('2501.00'),
+            'quantity': 1
+        }
+        box = {
+            'name': 'Strict Threshold Box',
+            'inner_length': Decimal('20.00'),
+            'inner_width': Decimal('20.00'),
+            'inner_height': Decimal('20.00'),
+            'max_weight': Decimal('2500.00'),
+            'cost': Decimal('2.00')
+        }
+        result = select_best_box(items=[item], boxes=[box])
+        self.assertFalse(result.has_recommendation)
+        self.assertEqual(len(result.rejected_boxes), 1)
+        self.assertIn("exceeds box max weight capacity", result.rejected_boxes[0].reason)
+
+    def test_order_item_with_quantity_zero_ignored(self):
+        # Catches bugs where zero-quantity line items add phantom weight, volume, or dimension conflicts to an otherwise valid order.
+        items = [
+            {
+                'name': 'Cancelled Giant Sofa',
+                'length': Decimal('300.00'),
+                'width': Decimal('200.00'),
+                'height': Decimal('150.00'),
+                'weight': Decimal('50000.00'),
+                'quantity': 0
+            },
+            {
+                'name': 'Active Pen',
+                'length': Decimal('14.00'),
+                'width': Decimal('1.00'),
+                'height': Decimal('1.00'),
+                'weight': Decimal('25.00'),
+                'quantity': 1
+            }
+        ]
+        box = {
+            'name': 'Small Parcel',
+            'inner_length': Decimal('20.00'),
+            'inner_width': Decimal('10.00'),
+            'inner_height': Decimal('5.00'),
+            'max_weight': Decimal('500.00'),
+            'cost': Decimal('1.00')
+        }
+        result = select_best_box(items=items, boxes=[box])
+        self.assertTrue(result.has_recommendation)
+        self.assertEqual(result.recommended_box['name'], 'Small Parcel')
+
+    def test_all_items_with_quantity_zero(self):
+        # Catches failure to return the explicit 'zero or non-positive quantity' error result when all order line items have quantity 0.
+        items = [
+            {
+                'name': 'Cancelled Item 1',
+                'length': Decimal('10.00'),
+                'width': Decimal('10.00'),
+                'height': Decimal('10.00'),
+                'weight': Decimal('100.00'),
+                'quantity': 0
+            },
+            {
+                'name': 'Cancelled Item 2',
+                'length': Decimal('5.00'),
+                'width': Decimal('5.00'),
+                'height': Decimal('5.00'),
+                'weight': Decimal('50.00'),
+                'quantity': 0
+            }
+        ]
+        box = {
+            'name': 'Box 1',
+            'inner_length': Decimal('20.00'),
+            'inner_width': Decimal('20.00'),
+            'inner_height': Decimal('20.00'),
+            'max_weight': Decimal('1000.00'),
+            'cost': Decimal('1.00')
+        }
+        result = select_best_box(items=items, boxes=[box])
+        self.assertFalse(result.has_recommendation)
+        self.assertIsNone(result.recommended_box)
+        self.assertEqual(result.reason, "All order items have zero or non-positive quantity.")
+
+    def test_empty_box_list(self):
+        # Catches unhandled exceptions or missing failure reason when the box catalog is completely empty.
+        item = {
+            'name': 'Item',
+            'length': Decimal('10.00'),
+            'width': Decimal('10.00'),
+            'height': Decimal('10.00'),
+            'weight': Decimal('100.00'),
+            'quantity': 1
+        }
+        result = select_best_box(items=[item], boxes=[])
+        self.assertFalse(result.has_recommendation)
+        self.assertIsNone(result.recommended_box)
+        self.assertEqual(result.reason, "No candidate boxes available for selection.")
+
+    def test_known_limitation_volume_heuristic_false_positive(self):
+        # Documents known limitation: total volume and individual dimensions pass, but items physically collide in 3D space.
+        # Two 9x9x2 items (total volume 324 cm3) pass into a 10x10x3.5 box (volume 350 cm3) because each 9x9x2 fits
+        # individually and 324 <= 350, even though stacking requires height 4.0 and side-by-side requires width 18.0.
+        items = [
+            {
+                'name': 'Flat Block A',
+                'length': Decimal('9.00'),
+                'width': Decimal('9.00'),
+                'height': Decimal('2.00'),
+                'weight': Decimal('100.00'),
+                'quantity': 1
+            },
+            {
+                'name': 'Flat Block B',
+                'length': Decimal('9.00'),
+                'width': Decimal('9.00'),
+                'height': Decimal('2.00'),
+                'weight': Decimal('100.00'),
+                'quantity': 1
+            }
+        ]
+        box = {
+            'name': 'Tight Shallow Box',
+            'inner_length': Decimal('10.00'),
+            'inner_width': Decimal('10.00'),
+            'inner_height': Decimal('3.50'),
+            'max_weight': Decimal('1000.00'),
+            'cost': Decimal('1.50')
+        }
+        result = select_best_box(items=items, boxes=[box])
+        # Documents that the current heuristic approves this box despite physical 3D impossibility
+        self.assertTrue(result.has_recommendation)
+        self.assertEqual(result.recommended_box['name'], 'Tight Shallow Box')
+
 
 class BoxSelectionAPITests(TestCase):
     """Integration tests for the REST API endpoint POST /api/orders/<id>/recommend-box/."""
@@ -279,6 +474,71 @@ class BoxSelectionAPITests(TestCase):
         data = response.json()
         self.assertIn("error", data)
         self.assertEqual(data["error"], "Order with ID 99999 not found.")
+
+    def test_api_get_request_returns_405(self):
+        # Catches failure to restrict the recommendation endpoint to POST requests only.
+        order = Order.objects.create(order_number="ORD-METHOD-TEST")
+        response = self.client.get(f'/api/orders/{order.id}/recommend-box/')
+        self.assertEqual(response.status_code, 405)
+        self.assertIn("error", response.json())
+
+    def test_api_order_with_no_items_returns_400(self):
+        # Catches missing validation when an order exists in the DB but has no line items attached.
+        order = Order.objects.create(order_number="ORD-NO-ITEMS")
+        Box.objects.create(
+            name="Sample Box",
+            inner_length=Decimal('20.00'),
+            inner_width=Decimal('20.00'),
+            inner_height=Decimal('20.00'),
+            max_weight=Decimal('2000.00'),
+            cost=Decimal('1.00')
+        )
+        response = self.client.post(f'/api/orders/{order.id}/recommend-box/')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("has no items to pack", response.json()["error"])
+
+    def test_api_no_boxes_in_db_returns_400(self):
+        # Catches unhandled 500 errors when the Box table has zero records available for recommendation.
+        product = Product.objects.create(
+            name="Book",
+            length=Decimal('20.00'),
+            width=Decimal('15.00'),
+            height=Decimal('3.00'),
+            weight=Decimal('300.00')
+        )
+        order = Order.objects.create(order_number="ORD-NO-BOXES")
+        OrderItem.objects.create(order=order, product=product, quantity=1)
+
+        response = self.client.post(f'/api/orders/{order.id}/recommend-box/')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("No shipping boxes exist in the system", response.json()["error"])
+
+    def test_api_case_where_no_box_fits_returns_200_with_has_recommendation_false(self):
+        # Catches returning 400/500 instead of a valid 200 result with has_recommendation false when an order exceeds all boxes.
+        huge_product = Product.objects.create(
+            name="Kayak",
+            length=Decimal('300.00'),
+            width=Decimal('80.00'),
+            height=Decimal('40.00'),
+            weight=Decimal('25000.00')
+        )
+        Box.objects.create(
+            name="Small Parcel",
+            inner_length=Decimal('30.00'),
+            inner_width=Decimal('30.00'),
+            inner_height=Decimal('30.00'),
+            max_weight=Decimal('5000.00'),
+            cost=Decimal('2.00')
+        )
+        order = Order.objects.create(order_number="ORD-TOO-LARGE")
+        OrderItem.objects.create(order=order, product=huge_product, quantity=1)
+
+        response = self.client.post(f'/api/orders/{order.id}/recommend-box/')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertFalse(data["has_recommendation"])
+        self.assertIsNone(data["recommended_box"])
+        self.assertGreater(len(data["rejected_boxes"]), 0)
 
     def test_api_success_case(self):
         # Catches serialization failures, database relation prefetching bugs, or broken payload contracts in the API endpoint.
@@ -312,3 +572,47 @@ class BoxSelectionAPITests(TestCase):
         self.assertEqual(data["recommended_box"]["cost"], 2.15)
         self.assertEqual(data["order"]["order_number"], "ORD-API-TEST-001")
         self.assertEqual(data["order"]["total_items"], 1)
+
+
+class StaffPackingViewTests(TestCase):
+    """Integration tests for the warehouse staff packing UI view."""
+
+    def setUp(self):
+        self.client = Client()
+        self.product = Product.objects.create(
+            name="Desk Clock",
+            length=Decimal('12.00'),
+            width=Decimal('8.00'),
+            height=Decimal('6.00'),
+            weight=Decimal('350.00')
+        )
+        self.box = Box.objects.create(
+            name="Clock Box",
+            inner_length=Decimal('15.00'),
+            inner_width=Decimal('10.00'),
+            inner_height=Decimal('8.00'),
+            max_weight=Decimal('1000.00'),
+            cost=Decimal('1.80')
+        )
+        self.order = Order.objects.create(order_number="ORD-UI-001")
+        OrderItem.objects.create(order=self.order, product=self.product, quantity=1)
+
+    def test_staff_packing_view_landing_page_renders_200(self):
+        # Catches template rendering errors, syntax issues in order_packing.html, or missing template context variables on GET /.
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Select Order for Packing Inspection")
+
+    def test_staff_packing_view_with_valid_order_shows_recommendation(self):
+        # Catches view failure to compute and display recommended box specifications when a valid order_id query param is supplied.
+        response = self.client.get(f'/?order_id={self.order.id}')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Clock Box")
+        self.assertContains(response, "Recommended Box")
+        self.assertContains(response, "Desk Clock")
+
+    def test_staff_packing_view_with_nonexistent_order_shows_error_message(self):
+        # Catches unhandled 404/500 errors or failure to present a user-friendly error notice when an unknown order_id is requested.
+        response = self.client.get('/?order_id=99999')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Order #99999 does not exist.")
