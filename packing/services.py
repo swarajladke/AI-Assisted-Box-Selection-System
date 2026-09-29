@@ -13,8 +13,9 @@ WHAT THIS ALGORITHM DOES NOT GUARANTEE:
    Satisfying the total volume check and single-item bounding dimension check is a
    NECESSARY condition, but NOT a SUFFICIENT condition for multiple items to physically
    fit together into the 3D space of the box. 3D Bin Packing is NP-hard. For instance,
-   two non-overlapping cubes of volume 4 each cannot fit into a box of volume 8 if the
-   box's aspect ratio does not match the arrangement of the cubes (e.g., long and narrow).
+   two items of 9x9x2 cm (total volume 324 cm³) will pass all checks for a 10x10x3.5 cm
+   box (volume 350 cm³). However, they cannot physically fit together because stacking
+   them requires 4.0 cm height, and side-by-side placement requires 18.0 cm width.
 2. Dunnage & Void Padding:
    This logic assumes zero-margin rigid placement without accounting for bubble wrap,
    kraft paper, or corrugated wall thickness tolerances.
