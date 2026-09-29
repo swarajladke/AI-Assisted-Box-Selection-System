@@ -12,6 +12,14 @@ A modular Django system that recommends the cheapest suitable shipping box for e
 
 ---
 
+## Submission Files
+* `AI_USAGE.md`
+* `TEST_OUTPUT.md`
+* `TRANSCRIPT` (to be added by me)
+* `LEARNINGS.md` (to be added by me)
+
+---
+
 ## 1. Setup & Installation
 
 ### Prerequisites
