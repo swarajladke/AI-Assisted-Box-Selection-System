@@ -4,8 +4,8 @@
 
 | Tool | Used for |
 |---|---|
-| Notion AI (custom name "n") | Planning: it suggested prompt ideas for the initial build, and later wrote the "fix all" and "run and verify" prompts given to the coding agent. It also reviewed the repo against the assignment brief and ran the tests in its own sandbox to find problems. It did not write the repo code. |
-| Google Antigravity (Gemini 3.8 Flash) | Wrote and edited the repo code, tests, README, seed command, and commits. |
+| Notion AI (custom name "n") | Planning: suggested prompt ideas for the initial build, and wrote the "fix all" and "run and verify" prompts. It also reviewed the repo against the assignment requirements and ran tests in its own sandbox to identify problems. It did not write repository code directly. |
+| Google Antigravity (Gemini 3.8 Flash) | Wrote and edited the application code, tests, documentation, seed command, and git commits. |
 
 ## 2. Prompts I gave
 
@@ -32,47 +32,47 @@ Prompts given to the coding agent, in order:
 
 ## 3. Output I accepted
 
-- Core algorithm in `packing/services.py`: item rotation via sorted dimensions, total weight and volume checks, and cheapest-box selection with tie-breaks by volume, then by name. It also returns reasons for each rejected box.
-- Models, the API endpoint, and the staff UI page.
-- GitHub Actions CI workflow matrix (`.github/workflows/django-tests.yml`) testing Python 3.10, 3.11, and 3.12.
-- From the "fix all" round, after I checked the diff:
-  - `0001_initial.py` migration
-  - grams as the standard unit
-  - 12 new tests, bringing the total to 25
-  - docstring and README fixes
-  - `seed_demo` command
-  - removal of `djangorestframework`
-  - `test_output.txt` added to `.gitignore`
+- The core packing algorithm in `packing/services.py`: item rotation via sorted dimensions, total weight and volume checks, and cheapest-box selection with tie-breaking by volume, then alphabetically by name. Also accepted the structured rejection reasons for non-fitting boxes.
+- The Django models, the REST endpoint, and the warehouse packing station UI.
+- The GitHub Actions CI matrix (`.github/workflows/django-tests.yml`) testing on Python 3.10, 3.11, and 3.12.
+- From the "fix all" round, after reviewing the diffs:
+  - The `0001_initial.py` migration file.
+  - Standardizing on grams across the codebase.
+  - 12 new test cases, bringing the total suite to 25 passing tests.
+  - Fixes to the docstrings and README.
+  - The `seed_demo` management command.
+  - Dropping `djangorestframework` from `requirements.txt`.
+  - Adding `test_output.txt` to `.gitignore`.
 
 ## 4. Output I rejected or modified
 
-- `djangorestframework` was removed from `requirements.txt` because it was unused.
-- The persistent local-execution restriction was overridden to allow running Django management and test commands locally.
-- The docstring example in `services.py` was replaced with the 9x9x2 cm items in a 10x10x3.5 cm box example.
-- The migration was kept as a single clean `0001_initial.py` after standardizing weight units rather than creating a secondary migration.
+- `djangorestframework` was removed from `requirements.txt` because standard Django views and `JsonResponse` were simpler and avoided an unneeded dependency.
+- The persistent local-execution restriction was overridden so Django management commands and the test suite could actually run locally on this machine.
+- The docstring example in `services.py` was replaced with the concrete 9x9x2 cm items in a 10x10x3.5 cm box example.
+- The migration was kept as a single clean `0001_initial.py` when standardizing weight units rather than creating an extra migration.
 - [FILL IN BY ME: anything I personally rejected or changed after reading the code]
 
 ## 5. Mistakes the AI made
 
-1. **Migrations were never committed.** `packing/migrations/` only had `__init__.py`, so `python manage.py test packing` failed 2 of 11 tests with `no such table: packing_product`, and the GitHub Actions run would have failed. This was found in the review, and the migration was added in the fix round.
-2. **Unclear weight units.** `Product.weight` said "grams or kg" and `Box.max_weight` had no unit. Fixed by standardizing on grams.
-3. **Misleading docstring example.** The "two cubes of volume 4" example in `services.py` was not a valid cube example. It was replaced with the 9x9x2 cm items in a 10x10x3.5 cm box example.
-4. **README problems.** A placeholder clone URL and folder name. It also told users to run `makemigrations` even though migrations should be committed.
-5. **Unused dependency.** `djangorestframework` was listed in `requirements.txt` but never used.
-6. **Missing edge-case tests.** These were missing: weight boundary, zero quantity, empty box list, API 400/405, no-fit API response, and the staff UI view.
-7. **Skipped verification.** After the fix round the coding agent reported the work as done without running any tests, citing an old rule in its setup meant for another project. I overrode the rule for this repo and had it run everything.
+1. **Migrations were never committed.** `packing/migrations/` only had an empty `__init__.py`, meaning `python manage.py test packing` failed immediately with `no such table: packing_product`, and GitHub Actions would have broken.
+2. **Unclear weight units.** `Product.weight` said "grams or kg" and `Box.max_weight` had no unit at all, risking silent calculation bugs.
+3. **Misleading docstring example.** The "two cubes of volume 4" example in `services.py` was mathematically nonsense for integer cuboids. It was replaced with the 9x9x2 cm items in a 10x10x3.5 cm box example.
+4. **README problems.** The README had placeholder clone URLs and told users to run `makemigrations` locally even though migrations belong in version control.
+5. **Unused dependency.** `djangorestframework` was added to `requirements.txt` despite never being imported or used.
+6. **Missing edge-case tests.** The initial test suite omitted tests for exact weight thresholds, zero-quantity line items, empty box catalogs, HTTP 400/405 API validation, and the staff UI views.
+7. **Skipped verification.** The coding agent initially marked the work finished without running tests, blocked by an old rule from a different project. It took an explicit override to get the agent to actually run the commands.
 
-**Known limitation, not a bug:** the algorithm checks single-item dimensions, total weight and total volume. Those are necessary but not sufficient conditions for a real 3D fit, so it can give false positives. This is documented in `services.py`, in the README, and in `test_known_limitation_volume_heuristic_false_positive`.
+**Known limitation, not a bug:** The algorithm checks single-item dimensions, total weight, and total volume. These are necessary but not sufficient conditions for items to physically fit together in 3D space, which can produce false positives. This is clearly documented in `services.py`, the README, and tested in `test_known_limitation_volume_heuristic_false_positive`.
 
 ## 6. How I verified the final code
 
-- Ran `python manage.py makemigrations --check --dry-run`, which reported no changes.
-- Ran `python manage.py test packing -v 2`, which ran 25 tests and passed. Output is in `TEST_OUTPUT.md`.
-- Ran `python manage.py seed_demo` twice. Row counts stayed at 4 boxes, 5 products and 3 orders, so it is idempotent.
-- Called the API with curl for each seeded order:
-  - `ORD-FIT-SMALL` recommended the Small Box.
-  - `ORD-NEED-LARGE` recommended the Large Box.
-  - `ORD-NO-FIT` returned `has_recommendation: false`.
-- Confirmed `db.sqlite3`, `venv/`, `__pycache__/` and `test_output.txt` are not tracked in git.
+- Ran `python manage.py makemigrations --check --dry-run` to confirm migrations and models are completely in sync (no changes detected).
+- Ran `python manage.py test packing -v 2` and confirmed all 25 tests pass. Output is captured in `TEST_OUTPUT.md`.
+- Ran `python manage.py seed_demo` twice and verified row counts stayed steady at 4 boxes, 5 products, and 3 orders with zero duplicates.
+- Tested the API with `curl` against each seeded order:
+  - `ORD-FIT-SMALL` correctly recommended the Small Box.
+  - `ORD-NEED-LARGE` correctly recommended the Large Box.
+  - `ORD-NO-FIT` correctly returned `has_recommendation: false`.
+- Confirmed `db.sqlite3`, `venv/`, `__pycache__/`, and `test_output.txt` remain untracked by git.
 - GitHub Actions run: `https://github.com/swarajladke/AI-Assisted-Box-Selection-System/actions`
 - [FILL IN BY ME: what I personally checked]
