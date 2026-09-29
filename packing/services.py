@@ -5,8 +5,8 @@ IMPORTANT LIMITATIONS & NON-GUARANTEES:
 ---------------------------------------
 This box selection algorithm uses a fast heuristic based on:
 1. Item-level orthogonal rotation check (sorted item dimensions <= sorted box dimensions)
-2. Cumulative order weight vs. box maximum weight capacity
-3. Cumulative order volume vs. box usable internal volume
+2. Cumulative order weight vs. box maximum weight capacity (both in grams)
+3. Cumulative order volume vs. box usable internal volume (both in cm³)
 
 WHAT THIS ALGORITHM DOES NOT GUARANTEE:
 1. 3D Bin Packing Feasibility:
@@ -74,13 +74,13 @@ def select_best_box(items: Sequence[Any], boxes: Sequence[Any]) -> BoxSelectionR
 
     Args:
         items: An iterable of order items or dicts. Each item must provide:
-               - length, width, height (or dimensions)
-               - weight
+               - length, width, height (dimensions in cm)
+               - weight (in grams)
                - quantity
                - optional name or sku for reporting
         boxes: An iterable of available boxes or dicts. Each box must provide:
-               - inner_length, inner_width, inner_height (or length, width, height)
-               - max_weight
+               - inner_length, inner_width, inner_height (internal dimensions in cm)
+               - max_weight (in grams)
                - cost
                - name
 

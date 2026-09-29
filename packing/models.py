@@ -34,14 +34,14 @@ class Product(models.Model):
         max_digits=10,
         decimal_places=2,
         validators=[validate_strictly_positive],
-        help_text="Weight in grams or kg (must be > 0)"
+        help_text="Weight in grams (must be > 0)"
     )
 
     class Meta:
         ordering = ['name']
 
     def __str__(self):
-        return f"{self.name} ({self.length}x{self.width}x{self.height}, {self.weight}g)"
+        return f"{self.name} ({self.length}x{self.width}x{self.height} cm, {self.weight}g)"
 
     @property
     def volume(self):
@@ -72,7 +72,7 @@ class Box(models.Model):
         max_digits=10,
         decimal_places=2,
         validators=[validate_strictly_positive],
-        help_text="Maximum allowed weight (must be > 0)"
+        help_text="Maximum allowed weight in grams (must be > 0)"
     )
     cost = models.DecimalField(
         max_digits=10,
@@ -86,7 +86,7 @@ class Box(models.Model):
         ordering = ['cost', 'name']
 
     def __str__(self):
-        return f"{self.name} (${self.cost}, max {self.max_weight})"
+        return f"{self.name} (${self.cost}, max {self.max_weight}g)"
 
     @property
     def inner_volume(self):

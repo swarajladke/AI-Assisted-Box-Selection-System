@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('inner_length', models.DecimalField(decimal_places=2, help_text='Internal length in cm (must be > 0)', max_digits=10, validators=[packing.models.validate_strictly_positive])),
                 ('inner_width', models.DecimalField(decimal_places=2, help_text='Internal width in cm (must be > 0)', max_digits=10, validators=[packing.models.validate_strictly_positive])),
                 ('inner_height', models.DecimalField(decimal_places=2, help_text='Internal height in cm (must be > 0)', max_digits=10, validators=[packing.models.validate_strictly_positive])),
-                ('max_weight', models.DecimalField(decimal_places=2, help_text='Maximum allowed weight (must be > 0)', max_digits=10, validators=[packing.models.validate_strictly_positive])),
+                ('max_weight', models.DecimalField(decimal_places=2, help_text='Maximum allowed weight in grams (must be > 0)', max_digits=10, validators=[packing.models.validate_strictly_positive])),
                 ('cost', models.DecimalField(decimal_places=2, help_text='Box procurement/shipping cost (must be >= 0)', max_digits=10, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))])),
             ],
             options={
@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
                 ('length', models.DecimalField(decimal_places=2, help_text='Length in cm (must be > 0)', max_digits=10, validators=[packing.models.validate_strictly_positive])),
                 ('width', models.DecimalField(decimal_places=2, help_text='Width in cm (must be > 0)', max_digits=10, validators=[packing.models.validate_strictly_positive])),
                 ('height', models.DecimalField(decimal_places=2, help_text='Height in cm (must be > 0)', max_digits=10, validators=[packing.models.validate_strictly_positive])),
-                ('weight', models.DecimalField(decimal_places=2, help_text='Weight in grams or kg (must be > 0)', max_digits=10, validators=[packing.models.validate_strictly_positive])),
+                ('weight', models.DecimalField(decimal_places=2, help_text='Weight in grams (must be > 0)', max_digits=10, validators=[packing.models.validate_strictly_positive])),
             ],
             options={
                 'ordering': ['name'],
